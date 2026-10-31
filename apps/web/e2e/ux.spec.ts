@@ -206,3 +206,20 @@ test("the overview shows real counts", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Peak Trail Coffee/ })).toBeVisible();
   await shot(page, "overview");
 });
+
+test("the AI Team page shows every agent with its real status", async ({ page }) => {
+  const base = await setup(page);
+  await page.goto(`${base}/agents`);
+  await expect(page.getByRole("heading", { name: "AI Team" })).toBeVisible();
+  await expect(page.getByText("Understanding", { exact: true })).toBeVisible();
+  await expect(page.getByText("Needs Google billing")).toHaveCount(2);
+  await expect(page.getByText("No runs yet")).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await expectAccessible(page, "agents");
+  await shot(page, "agents");
+  const clipped = await page
+    .getByRole("navigation", { name: "Main" })
+    .locator("a span.truncate")
+    .evaluateAll((items) => items.filter((item) => item.scrollWidth > item.clientWidth).map((i) => i.textContent));
+  expect(clipped).toEqual([]);
+});

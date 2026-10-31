@@ -246,7 +246,10 @@ def test_an_approval_cannot_be_decided_twice(client, make_user, model):
         f"/organizations/{org}/content/{content['id']}/approvals/{content['approvals'][0]['id']}/decision"
     )
     assert client.post(path, json={"approve": True}, headers=headers).status_code == 200
-    assert client.post(path, json={"approve": False, "feedback": "no"}, headers=headers).status_code == 409
+    assert (
+        client.post(path, json={"approve": False, "feedback": "not this one"}, headers=headers).status_code
+        == 409
+    )
 
 
 def test_database_refuses_changes_to_history(client, make_user, model, db):

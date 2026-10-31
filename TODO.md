@@ -47,8 +47,8 @@ Signup, organization, brand, guidelines upload, Gemini profile, human approval, 
 
 ## Phases 4 to 12
 
-- [ ] 4: Audience Intelligence
-- [ ] 5: Campaign Flight Simulator
+- [x] 4: Audience Intelligence (pasted comments only)
+- [x] 5: Campaign Flight Simulator (no forecasts)
 - [ ] 6: Content production
 - [ ] 7: Brand Guardian
 - [ ] 8: Human approval

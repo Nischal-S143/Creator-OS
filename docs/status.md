@@ -15,8 +15,11 @@ Last updated 31 October 2026. The first milestone works end to end on real servi
 | Ad Creation (copy), Market Gap | Working | Live run; Market Gap gives hypotheses only |
 | Content Studio, Guardian and Approval screens | Built | Type-checked; the full browser flow has not passed yet |
 | Voice, Video, image generation | Not built | Need providers |
-| Publishing, Analytics and Feedback, Learning Ledger | Not built | Publishing needs platform accounts |
-| Audience Intelligence, Flight Simulator, Creative Autopsy, Cross-Brand, billing | Not built | None |
+| Publishing calendar, recorded publishing, results entry | Built | Direct posting needs platform accounts |
+| Feedback agent and Learning Ledger | Built | Measured comparison is code; lessons need human approval |
+| Flight Simulator (no forecasts) | Built | See test results in the latest report |
+| Audience Intelligence (pasted comments only) | Built | See test results in the latest report |
+| Creative Autopsy, Cross-Brand, billing | Not built | None |
 
 ## Known limits
 

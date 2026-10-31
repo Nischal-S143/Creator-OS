@@ -34,24 +34,27 @@ def _reset_caches() -> None:
 
 @pytest.fixture(scope="session")
 def migrated():
-    schema = f"creatoros_test_{uuid.uuid4().hex[:8]}"
+    reuse = os.environ.get("TEST_REUSE_SCHEMA")
+    schema = reuse or f"creatoros_test_{uuid.uuid4().hex[:8]}"
     _reset_caches()
     settings = get_settings()
     app_role = make_url(settings.database_url).username
     migrator = make_url(settings.migration_database_url).username
-    admin = create_engine(
-        os.environ.get("ADMIN_DATABASE_URL") or dotenv_values(ENV)["ADMIN_DATABASE_URL"],
-        isolation_level="AUTOCOMMIT",
-    )
-    with admin.connect() as c:
-        c.execute(text(f'CREATE SCHEMA "{schema}" AUTHORIZATION "{migrator}"'))
-        c.execute(text(f'GRANT USAGE ON SCHEMA "{schema}" TO "{app_role}"'))
-        c.execute(
-            text(
-                f'ALTER DEFAULT PRIVILEGES FOR ROLE "{migrator}" IN SCHEMA "{schema}" '
-                f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "{app_role}"'
-            )
+    admin = None
+    if not reuse:
+        admin = create_engine(
+            os.environ.get("ADMIN_DATABASE_URL") or dotenv_values(ENV)["ADMIN_DATABASE_URL"],
+            isolation_level="AUTOCOMMIT",
         )
+        with admin.connect() as c:
+            c.execute(text(f'CREATE SCHEMA "{schema}" AUTHORIZATION "{migrator}"'))
+            c.execute(text(f'GRANT USAGE ON SCHEMA "{schema}" TO "{app_role}"'))
+            c.execute(
+                text(
+                    f'ALTER DEFAULT PRIVILEGES FOR ROLE "{migrator}" IN SCHEMA "{schema}" '
+                    f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "{app_role}"'
+                )
+            )
     mp = pytest.MonkeyPatch()
     mp.setenv("DB_SCHEMA", schema)
     _reset_caches()
@@ -63,9 +66,10 @@ def migrated():
         get_engine().dispose()
         mp.undo()
         _reset_caches()
-        with admin.connect() as c:
-            c.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))
-        admin.dispose()
+        if admin is not None:
+            with admin.connect() as c:
+                c.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))
+            admin.dispose()
 
 
 @pytest.fixture

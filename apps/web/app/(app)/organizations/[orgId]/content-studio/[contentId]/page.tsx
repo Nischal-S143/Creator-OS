@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { useOrg } from "@/components/org-shell";
 import { PageHeader } from "@/components/page-header";
+import { PublishAndResults } from "@/components/publish-and-results";
 import { ErrorState, LoadingRows } from "@/components/states";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,7 +14,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ApiError, api, can, useResource, type ContentDetail, type ContentVersion } from "@/lib/api";
+import {
+  ApiError,
+  api,
+  can,
+  useResource,
+  type CalendarItem,
+  type ContentDetail,
+  type ContentVersion,
+} from "@/lib/api";
 
 const textareaClass =
   "w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -110,6 +119,7 @@ export default function ContentDetailPage({ params }: { params: Promise<{ conten
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const calendar = useResource<{ items: CalendarItem[] }>(`${base}/calendar`);
 
   async function run(action: () => Promise<unknown>, success: string, fallback: string) {
     setBusy(true);
@@ -416,6 +426,19 @@ export default function ContentDetailPage({ params }: { params: Promise<{ conten
               ) : null}
             </CardContent>
           </Card>
+
+          {data.status === "approved" ? (
+            <PublishAndResults
+              orgBase={base}
+              contentId={data.id}
+              role={organization.role}
+              publication={calendar.data?.items.find((item) => item.content_id === data.id)}
+              onChanged={() => {
+                calendar.reload();
+                reload();
+              }}
+            />
+          ) : null}
         </div>
       </div>
     </>

@@ -358,7 +358,7 @@ def test_document_steps_are_logged_to_the_shared_datapack(client, make_user, fak
     document = upload(client, base, headers, data=secret).json()["id"]
     profile = client.post(api(f"{base}/documents/{document}/extract-profile"), headers=headers).json()
     client.post(api(f"{base}/profiles/{profile['id']}/decision"), json={"approve": True}, headers=headers)
-    assert [agent for _, agent in meko.turns] == ["Document intake", "Brand profile", "Human reviewer"]
+    assert [agent for _, agent in meko.turns] == ["Document intake", "Understanding", "Human reviewer"]
     assert {pack for pack, _ in meko.turns} == {"shared"}
     assert not any("secret" in task.lower() for task in meko.tasks)
     assert all("secret" not in memory for memory in meko.packs["shared"])

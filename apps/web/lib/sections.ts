@@ -14,31 +14,6 @@ export type PlannedSection = {
 
 export const PLANNED_SECTIONS: PlannedSection[] = [
   {
-    slug: "audience",
-    title: "Audience Intelligence",
-    description: "Turn real audience questions into campaign opportunities.",
-    phase: "Phase 4",
-    wireframe: "cards",
-    capabilities: [
-      "Find repeated questions and topic clusters from authorized accounts",
-      "See sentiment and content gaps",
-      "Approve an opportunity and start a campaign from it",
-    ],
-    needs: "Connected social accounts with the right permissions",
-  },
-  {
-    slug: "simulator",
-    title: "Campaign Flight Simulator",
-    description: "Compare campaign strategies before spending on production.",
-    phase: "Phase 5",
-    wireframe: "cards",
-    capabilities: [
-      "Generate alternative strategies from a brief",
-      "Compare brand fit, audience relevance, cost and risk",
-      "See the evidence and assumptions behind every score",
-    ],
-  },
-  {
     slug: "video",
     title: "Video Editor",
     description: "Assemble and preview generated video.",
@@ -52,19 +27,6 @@ export const PLANNED_SECTIONS: PlannedSection[] = [
     needs: "Image, video and voice generation providers",
   },
   {
-    slug: "calendar",
-    title: "Publishing Calendar",
-    description: "Plan and track approved posts across clients.",
-    phase: "Phase 9",
-    wireframe: "calendar",
-    capabilities: [
-      "Schedule approved content",
-      "See status across clients and platforms",
-      "Reconcile uncertain results before any retry",
-    ],
-    needs: "Connected social accounts",
-  },
-  {
     slug: "social-accounts",
     title: "Social Accounts",
     description: "Connect client accounts through official platform sign-in.",
@@ -76,19 +38,6 @@ export const PLANNED_SECTIONS: PlannedSection[] = [
       "Disconnect at any time",
     ],
     needs: "Approved developer apps on each platform",
-  },
-  {
-    slug: "analytics",
-    title: "Analytics",
-    description: "Measured results for published content.",
-    phase: "Phase 10",
-    wireframe: "chart",
-    capabilities: [
-      "Track reach, engagement and watch time from platform data",
-      "Review each post at 48 hours, 7 days and 30 days",
-      "Approve lessons that shape future campaigns",
-    ],
-    needs: "Published posts and platform metrics access",
   },
   {
     slug: "creative-autopsy",

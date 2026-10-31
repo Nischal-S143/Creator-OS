@@ -2,6 +2,7 @@
 
 import {
   BarChart3Icon,
+  BotIcon,
   BrainIcon,
   BuildingIcon,
   CalendarDaysIcon,
@@ -38,7 +39,10 @@ type Item = { label: string; path: string; Icon: LucideIcon; planned?: boolean }
 
 function navigation(organization: Organization): { title: string; items: Item[] }[] {
   const role = organization.role;
-  const workspace: Item[] = [{ label: "Overview", path: "", Icon: LayoutDashboardIcon }];
+  const workspace: Item[] = [
+    { label: "Overview", path: "", Icon: LayoutDashboardIcon },
+    { label: "AI Team", path: "/agents", Icon: BotIcon },
+  ];
   if (can.viewBrands(role)) workspace.push({ label: "Clients", path: "/clients", Icon: BuildingIcon });
   const create: Item[] = can.viewBrands(role)
     ? [
@@ -55,8 +59,8 @@ function navigation(organization: Organization): { title: string; items: Item[] 
       title: "Plan and create",
       items: [
         ...create,
-        { label: "Audience Intelligence", path: "/audience", Icon: LightbulbIcon, planned: true },
-        { label: "Flight Simulator", path: "/simulator", Icon: GaugeIcon, planned: true },
+        { label: "Audience Intelligence", path: "/audience", Icon: LightbulbIcon },
+        { label: "Flight Simulator", path: "/simulator", Icon: GaugeIcon },
         { label: "Content Studio", path: "/content-studio", Icon: FileTextIcon },
         { label: "Video Editor", path: "/video", Icon: ClapperboardIcon, planned: true },
       ],
@@ -66,14 +70,14 @@ function navigation(organization: Organization): { title: string; items: Item[] 
       items: [
         { label: "Brand Guardian", path: "/guardian", Icon: ShieldCheckIcon },
         { label: "Approval Center", path: "/approvals", Icon: ClipboardCheckIcon },
-        { label: "Publishing Calendar", path: "/calendar", Icon: CalendarDaysIcon, planned: true },
+        { label: "Publishing Calendar", path: "/calendar", Icon: CalendarDaysIcon },
         { label: "Social Accounts", path: "/social-accounts", Icon: Share2Icon, planned: true },
       ],
     },
     {
       title: "Learn",
       items: [
-        { label: "Analytics", path: "/analytics", Icon: BarChart3Icon, planned: true },
+        { label: "Analytics", path: "/analytics", Icon: BarChart3Icon },
         { label: "Creative Autopsy", path: "/creative-autopsy", Icon: MicroscopeIcon, planned: true },
         { label: "Agency Intelligence", path: "/intelligence", Icon: NetworkIcon, planned: true },
       ],
@@ -203,7 +207,7 @@ export function OrgShell({
         Skip to content
       </a>
       <div className="flex min-h-screen">
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block">
           <Sidebar organization={organization} />
         </aside>
         {menuOpen ? (
@@ -223,7 +227,7 @@ export function OrgShell({
               className="absolute inset-0 bg-black/40"
               onClick={() => setOpenedAt(null)}
             />
-            <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-sidebar text-sidebar-foreground shadow-xl">
+            <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-sidebar text-sidebar-foreground shadow-xl">
               <Button
                 variant="ghost"
                 size="icon-sm"

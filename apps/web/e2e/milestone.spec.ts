@@ -37,7 +37,7 @@ test("the first milestone works end to end with real Gemini and Meko", async ({ 
   });
   await expect(page.getByText("guidelines.txt")).toBeVisible();
 
-  await page.getByRole("button", { name: "Draft profile with AI" }).click();
+  await page.getByRole("button", { name: "Analyze with Understanding Agent" }).click();
   await expect(page.getByText("Waiting for approval")).toBeVisible({ timeout: 120_000 });
   await expect(page.getByText(/health claims/i).first()).toBeVisible();
 

@@ -72,4 +72,5 @@ Development, staging and production each get a separate database, Meko datapacks
 ## Known constraints
 
 - The current cluster is a sandbox: 1 node, no fault tolerance, 2 vCPU, 4 GB memory, 10 GB disk. It suits development only.
+- The sandbox refuses new objects past 180 tablets, and each copy of the schema uses about 60. Interrupted test runs can leave `creatoros_test_*` schemas that use this up. The full product needs a larger cluster or colocated tables.
 - Publishing depends on platform app review and quotas, which sit outside our control.

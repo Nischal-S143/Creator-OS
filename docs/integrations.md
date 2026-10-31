@@ -34,6 +34,7 @@ Every provider sits behind an adapter in `apps/api/app/integrations`. "Tested" b
 - Before implementing: read each tool's live schema, and do not rely on this list.
 - `datapack_id` is optional on memory tools: per the live schema, `memory_search` falls back to the caller's default datapack, and it searches across agents, so `agent_id` does not separate brands. The adapter must require a backend-resolved `datapack_id` on every call and refuse calls without one.
 - Meko extracts memories from the input side of a conversation turn, so that side holds only the agent and its task, never document text. Metadata must be a JSON string.
+- The free Meko plan refused new datapacks on 31 October 2026 with `FREE_TIER_DATAPACK_LIMIT`. Per-brand datapacks, which real client data needs, require a plan that allows them.
 - `MEKO_SHARED_DATAPACK_ID` uses one datapack, such as the default, for all brands in development, with a brand tag filter. It is refused elsewhere.
 - The backend resolves brand-to-datapack mapping. The frontend never supplies a datapack ID.
 

@@ -23,7 +23,12 @@ def datapacks(meko):
     created: list[str] = []
 
     def create() -> str:
-        pack = meko.create_datapack(unique("creatoros-test"))
+        try:
+            pack = meko.create_datapack(unique("creatoros-test"))
+        except MekoError as exc:
+            if "FREE_TIER_DATAPACK_LIMIT" in str(exc):
+                pytest.skip("the Meko plan cannot create more datapacks, so this was not tested")
+            raise
         created.append(pack)
         return pack
 

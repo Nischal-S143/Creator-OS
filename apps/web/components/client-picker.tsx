@@ -8,7 +8,7 @@ import { EmptyState, ErrorState, LoadingRows } from "@/components/states";
 import { useResource, type Brand, type Page } from "@/lib/api";
 
 /** Brand Brain and Campaign Studio belong to one client, so these pages start by choosing one. */
-export function ClientPicker({ tab }: { tab: "brain" | "campaigns" }) {
+export function ClientPicker({ tab }: { tab: "brain" | "campaigns" | "audience" }) {
   const organization = useOrg();
   const base = `/organizations/${organization.id}`;
   const { data, error, loading, reload } = useResource<Page<Brand>>(`${base}/brands?limit=100`);

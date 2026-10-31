@@ -25,7 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="flex min-h-screen" role="status" aria-label="Loading">
-        <Skeleton className="hidden w-64 rounded-none lg:block" />
+        <Skeleton className="hidden w-72 rounded-none lg:block" />
         <div className="flex-1 space-y-4 p-8">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-32 w-full" />
