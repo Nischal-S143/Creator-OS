@@ -64,6 +64,7 @@ class RunOut(Response):
 
 
 class CampaignDetail(CampaignOut):
+    simulation: dict | None
     scenarios: list[ScenarioOut]
     runs: list[RunOut]
 
@@ -112,6 +113,7 @@ def _detail(db: Session, campaign: Campaign) -> CampaignDetail:
     )
     return CampaignDetail(
         **CampaignOut.model_validate(campaign).model_dump(),
+        simulation=campaign.simulation,
         scenarios=[ScenarioOut.model_validate(row) for row in scenarios],
         runs=[RunOut.model_validate(row) for row in runs],
     )
@@ -194,7 +196,15 @@ def generate_ideas(
         db.rollback()
         finish_run(db, run, error=type(exc).__name__)
         raise HTTPException(status_code=502, detail="AI could not generate ideas. Try again.") from exc
-    finish_run(db, run, detail={"memory_used": state["memory_used"], "memories": len(state["memories"])})
+    finish_run(
+        db,
+        run,
+        detail={
+            "memory_used": state["memory_used"],
+            "memories": len(state["memories"]),
+            "lessons_used": state["lessons_used"],
+        },
+    )
     return _detail(db, campaign)
 
 

@@ -234,8 +234,8 @@ def extract_profile(
     log_brand_step(
         meko,
         brand,
-        "Brand profile",
-        f"propose profile v{profile.version} for human review, not yet approved",
+        "Understanding",
+        f"analyze a brand document and propose profile v{profile.version}, not yet approved",
         draft.model_dump_json(),
     )
     return profile

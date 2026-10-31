@@ -9,6 +9,8 @@ from app.api.v1.brand_brain import router as brand_brain_router
 from app.api.v1.brands import router as brands_router
 from app.api.v1.campaigns import router as campaigns_router
 from app.api.v1.content import router as content_router
+from app.api.v1.intelligence import router as intelligence_router
+from app.api.v1.learning import router as learning_router
 from app.api.v1.organizations import router as organizations_router
 from app.core.config import get_settings
 
@@ -36,6 +38,8 @@ def create_app() -> FastAPI:
     app.include_router(brand_brain_router)
     app.include_router(campaigns_router)
     app.include_router(content_router)
+    app.include_router(intelligence_router)
+    app.include_router(learning_router)
     return app
 
 

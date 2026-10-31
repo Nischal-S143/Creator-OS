@@ -1,6 +1,7 @@
 import logging
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -21,6 +22,15 @@ class BrandContext:
     memories: list[str]
     memory_used: bool
     datapack_id: str | None
+
+
+def _approved_lessons(brand: Brand) -> list[dict]:
+    today = datetime.now(UTC).isoformat()
+    return [
+        {"lesson": entry["text"], "source": entry["source_title"], "based_on_posts": entry["sample_size"]}
+        for entry in brand.lessons or []
+        if entry["status"] == "approved" and entry.get("review_at", "") > today
+    ]
 
 
 def load_brand_context(
@@ -59,6 +69,7 @@ def load_brand_context(
             "content_pillars": profile.content_pillars,
             "restrictions": profile.restrictions,
             "memories": memories,
+            "approved_lessons": _approved_lessons(brand),
         },
         memories=memories,
         memory_used=memory_used,
