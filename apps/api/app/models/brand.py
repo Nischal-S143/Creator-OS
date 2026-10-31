@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import ForeignKey, ForeignKeyConstraint, String, UniqueConstraint, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
@@ -33,5 +33,7 @@ class Brand(TimestampMixin, Base):
     website_url: Mapped[str | None] = mapped_column(String(2048))
     # Set only by the backend. Never accepted from API requests.
     meko_datapack_id: Mapped[str | None] = mapped_column(String(255))
+    audience_report: Mapped[dict | None] = mapped_column(JSONB)
+    lessons: Mapped[list | None] = mapped_column(JSONB)
     owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)

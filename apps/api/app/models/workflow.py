@@ -83,6 +83,7 @@ class Campaign(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     objective: Mapped[str] = mapped_column(Text, nullable=False)
     audience: Mapped[str | None] = mapped_column(Text)
+    simulation: Mapped[dict | None] = mapped_column(JSONB)
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
