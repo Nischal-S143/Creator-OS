@@ -16,6 +16,11 @@ dependencies = [
     "google-genai",
     "httpx",
     "celery[redis]",
+    "pyjwt[crypto]",
+    "langgraph",
+    "langgraph-checkpoint-postgres",
+    "pymupdf",
+    "python-multipart",
 ]
 
 [project.optional-dependencies]
@@ -38,3 +43,4 @@ ignore = ["B008"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S"]
+"alembic/*" = ["S608"]
