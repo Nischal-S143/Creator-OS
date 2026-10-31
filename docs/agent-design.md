@@ -1,6 +1,6 @@
 # Agent design
 
-A LangGraph supervisor runs specialist agents as defined workflow steps with typed state, Pydantic outputs and fixed tools. Agents never call each other freely or bypass backend checks. None of this is built yet.
+A LangGraph supervisor runs specialist agents as defined workflow steps with typed state, Pydantic outputs and fixed tools. Agents never call each other freely or bypass backend checks. Research, Script, Visual planning, Brand Guardian, Ad Creation and Market Gap run today; Voice, Video, Publishing and Analytics are not built.
 
 ## Agents
 

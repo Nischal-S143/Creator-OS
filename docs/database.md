@@ -1,6 +1,6 @@
 # Database
 
-YugabyteDB YSQL is the authoritative store, accessed with SQLAlchemy 2.x, Alembic and `psycopg` 3. Migration `0001` (organizations and brands) exists but has not been applied to `public`, so it can still be revised freely.
+YugabyteDB YSQL is the authoritative store, accessed with SQLAlchemy 2.x, Alembic and `psycopg` 3. Migrations `0001` to `0003` are applied to `public`, with row-level security on every tenant table. Further schema changes need new migrations.
 
 ## Roles
 
@@ -31,22 +31,30 @@ Two layers, both required:
 1. The backend resolves membership and checks ownership on every operation.
 2. Row-level security policies filter on a per-transaction `app.tenant_id` setting.
 
-A live test on 31 October 2026 confirmed on the development cluster that a tenant saw only its row, that no tenant setting returned 0 rows, and that cross-tenant inserts and updates failed. That was a small functional test, not a load test. Policies are not implemented in the app yet.
+A live test on 31 October 2026 confirmed on the development cluster that a tenant saw only its row, that no tenant setting returned 0 rows, and that cross-tenant inserts and updates failed. Policies now run in the app, covered by the tests in `apps/api/tests/test_tenant_isolation.py`. These are functional tests, not load tests.
 
 ## Planned tables
 
 | Domain | Tables | Exists |
 | --- | --- | --- |
-| Identity | `organizations`, `users`, `memberships` | `organizations` only |
-| Brands | `brands`, `brand_profiles`, `brand_documents`, `brand_preferences`, `decision_records` | `brands` only |
-| Campaigns | `campaigns`, `campaign_scenarios`, `audience_sources`, `audience_insights` | No |
-| Content | `content_items`, `creative_features`, `media_assets` | No |
-| Quality | `guardian_reviews`, `approvals` | No |
+| Identity | `organizations`, `users`, `memberships` | All |
+| Brands | `brands`, `brand_profiles`, `brand_documents`, `brand_preferences`, `decision_records` | First three |
+| Campaigns | `campaigns`, `campaign_scenarios`, `audience_sources`, `audience_insights` | First two |
+| Content | `content_items`, `content_versions`, `creative_features`, `media_assets` | First two |
+| Quality | `guardian_reviews`, `approvals` | All |
 | Publishing | `social_accounts`, `publishing_jobs`, `publishing_logs`, `oauth_states` | No |
 | Analytics | `performance_metrics`, `experiments`, `learning_records` | No |
-| Operations | `agent_runs`, `agent_events`, `audit_logs`, `usage_records` | No |
+| Operations | `agent_runs`, `agent_events`, `audit_logs`, `usage_records` | `agent_runs` only |
 
 Field-level detail is in the technical blueprint, section 4. Each table is added by the phase that first needs it.
+
+## Immutable history
+
+The app role can only read and insert `content_versions` and `guardian_reviews`. It can change an approval only while it is pending. The database enforces both.
+
+## Connections
+
+Automatic prepared statements are off, because the YugabyteDB connection manager can switch backends, which lose them.
 
 ## Tests
 

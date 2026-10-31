@@ -2,14 +2,14 @@
 
 An AI marketing agency that remembers, thinks, creates, validates and learns. CreatorOS helps agencies manage many client brands, from understanding a brand through to approved publishing and learning from results.
 
-**Status:** early foundation. Only the database layer and a Gemini service exist; there is no login or frontend yet. See [docs/status.md](docs/status.md).
+**Status:** foundation. Sign-up, agencies, client brands, members and roles work end to end. AI agents and the product features are not built yet. See [docs/status.md](docs/status.md).
 
 ## Repository layout
 
 | Path | Purpose | State |
 | --- | --- | --- |
 | `apps/api` | FastAPI backend, Alembic migrations, tests | Started |
-| `apps/web` | Next.js frontend | Not started |
+| `apps/web` | Next.js frontend | Started |
 | `packages` | Shared types, API client, UI | Not started |
 | `infrastructure` | Docker, AWS, monitoring, CI | Not started |
 | `docs` | Architecture, database, agents, integrations, security, status | Current |
@@ -36,6 +36,27 @@ Run from `apps/api`:
 The worker needs Memurai or Redis on `REDIS_URL`; Docker is not used locally. To run every backend check, use `scripts/check.ps1`.
 
 Database role setup is described in [docs/database.md](docs/database.md).
+
+## Run the app
+
+Start the API from `apps/api`, then the web app from `apps/web` in a second terminal. Open <http://localhost:3000>.
+
+```
+../../.venv/Scripts/uvicorn app.main:app --reload --port 8000
+```
+
+```
+npm install
+npm run dev
+```
+
+The web app calls the API at `http://127.0.0.1:8000` unless `API_URL` is set. Accounts are stored in `data/auth`, and everything else in YugabyteDB.
+
+Browser tests expect both servers running, with Chrome installed:
+
+```
+npm run test:e2e
+```
 
 ## Documentation
 

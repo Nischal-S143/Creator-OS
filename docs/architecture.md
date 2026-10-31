@@ -63,7 +63,7 @@ packages/          shared-types, api-client, ui
 infrastructure/    docker, aws, monitoring, ci
 ```
 
-The current `apps/api/app` layout is flatter than this and moves to it during Phase 1.
+Tenant routes nest under `/api/v1/organizations/{org_id}`, so every request names its tenant and the backend checks membership first.
 
 ## Environments
 

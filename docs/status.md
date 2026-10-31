@@ -1,23 +1,29 @@
 # Implementation status
 
-Last updated 31 October 2026. Phase 0 is complete for the backend, and Phase 1 is in progress. `scripts/check.ps1` last passed with 51 of 51 tests on the real cluster and local broker.
+Last updated 31 October 2026. The first milestone works end to end on real services, and the content agent workflow is built. Most later phases are not started.
 
 | Component | State | Evidence |
 | --- | --- | --- |
-| Git and secret scanning | Working locally; nothing pushed | Planted secret blocked by hook |
-| Database connection, pool, `/health/db` | Working | Integration tests |
-| Restricted roles | Working | 7 role tests |
-| Migration `0001` | Tested in throwaway schema | Not applied to `public` |
-| Gemini service | Working | Fake-client tests and a live call |
-| AI test endpoint | Refused without `INTERNAL_API_KEY` | Tests and a live call |
-| Celery worker | Working on Memurai, without Docker | Real-worker test |
-| Row-level security, LangGraph checkpointing | Feasibility only | Throwaway tests; not in the app |
-| Auth, Meko, frontend | Not started | None |
+| Login and sign-up (JSON file accounts) | Working | API and browser tests |
+| Users, memberships, roles, row-level security | Working | Isolation and attack tests on the real cluster |
+| Organization, member and brand APIs | Working | API tests on the real cluster |
+| Web shell: navigation, themes, phone layout, accessibility | Working | 9 browser UX tests, including axe scans |
+| Document upload, Gemini brand profile, human approval | Working | Live run with real Gemini |
+| Meko memory, per-brand datapacks, shared development datapack | Working | Live tests, including two-brand leakage |
+| Campaign ideas (LangGraph) | Working | Live run |
+| Research, Script, Visual plan, Guardian, approval pause | Working | Live run with real Gemini and Meko |
+| Ad Creation (copy), Market Gap | Working | Live run; Market Gap gives hypotheses only |
+| Content Studio, Guardian and Approval screens | Built | Type-checked; the full browser flow has not passed yet |
+| Voice, Video, image generation | Not built | Need providers |
+| Publishing, Analytics and Feedback, Learning Ledger | Not built | Publishing needs platform accounts |
+| Audience Intelligence, Flight Simulator, Creative Autopsy, Cross-Brand, billing | Not built | None |
 
-## Known loose ends
+## Known limits
 
-- Pending from the project owner: root certificate (`verify-full`), new Gemini key, Supabase project.
-- The GitHub repo stays public by decision, so everything pushed must be safe to publish.
+- Research and Market Gap have no web or market data, so their output is labelled as unverified.
+- `MEKO_SHARED_DATAPACK_ID` puts all brands in one datapack, separated only by a tag. It is refused outside development.
+- Checkpoints for finished workflows are not pruned yet.
+- Pending: root certificate (`verify-full`), email verification, password reset, per-brand assignment.
+- The GitHub repo is public by decision, so everything pushed must be safe to publish.
 - Local development runs without Docker. Production packaging is decided in Phase 12.
-- The test client warns that `httpx` use is deprecated in favour of `httpx2`. It is harmless today.
 - `docs/IMPLEMENTATION_PLAN.md` is superseded by `TODO.md`.

@@ -49,4 +49,6 @@ Run from `apps/api` with the root virtual environment:
 ../../.venv/Scripts/uvicorn app.main:app --reload
 ```
 
+Run all backend checks with `scripts/check.ps1`. From `apps/web`: `npm run lint`, `npm run build`, `npm run test:e2e`.
+
 All schema changes go through Alembic. Integration tests use a throwaway schema and must not touch `public`.
