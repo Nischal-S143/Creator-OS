@@ -90,7 +90,44 @@ export type AgentRun = {
   detail: Record<string, unknown>;
   started_at: string;
 };
-export type CampaignDetail = Campaign & { scenarios: Scenario[]; runs: AgentRun[] };
+export type Simulation = {
+  strategies: {
+    name: string;
+    summary: string;
+    target_audience: string;
+    content_pillars: string[];
+    hook_strategy: string;
+    production_effort: string;
+    ratings: Record<string, { score: number; reason: string }>;
+    assumptions: string[];
+    evidence: string[];
+    risks: string[];
+    total_score: number;
+  }[];
+  selected: number | null;
+  weights: Record<string, number>;
+  limitations: string[];
+};
+export type AudienceReport = {
+  topics: {
+    topic: string;
+    intent: string;
+    sentiment: string;
+    representative_questions: string[];
+    content_gap: boolean;
+    suggested_angle: string;
+    comment_count: number;
+    opportunity_score: number;
+  }[];
+  comments_analyzed: number;
+  comments_removed: number;
+  limitations: string[];
+};
+export type CampaignDetail = Campaign & {
+  scenarios: Scenario[];
+  runs: AgentRun[];
+  simulation: Simulation | null;
+};
 export type ContentStatus =
   | "generating"
   | "failed"
@@ -172,6 +209,81 @@ export type MarketGapReport = {
     confidence: string;
   }[];
   limitations: string[];
+};
+export type CalendarItem = {
+  content_id: string;
+  brand_id: string;
+  brand_name: string;
+  title: string;
+  platform: string;
+  kind: string;
+  status: string;
+  version: number;
+  scheduled_for: string | null;
+  published_at: string | null;
+  url: string | null;
+  windows_reported: string[];
+};
+export type ResultReport = {
+  window: string;
+  comparison: {
+    verdict: string;
+    sample_size: number;
+    metrics: Record<
+      string,
+      {
+        value: number;
+        baseline_median: number | null;
+        ratio_to_baseline: number | null;
+        sample_size: number;
+      }
+    >;
+  };
+  summary: string | null;
+  ai_available: boolean;
+  hypotheses: { observation: string; hypothesis: string; suggested_experiment: string; confidence: string }[];
+};
+export type Lesson = {
+  id: string;
+  status: "proposed" | "approved" | "rejected";
+  text: string;
+  observation: string;
+  suggested_experiment: string;
+  confidence: string;
+  sample_size: number;
+  source_title: string;
+  window: string;
+  review_at?: string;
+};
+export type CampaignReport = {
+  id: string;
+  name: string;
+  objective: string;
+  strategy: { name: string; total_score: number } | null;
+  selected_idea: string | null;
+  lessons_used: { lesson: string; source: string; based_on_posts: number }[];
+  content: {
+    id: string;
+    title: string;
+    kind: string;
+    status: string;
+    version: number;
+    guardian_status: string | null;
+    published_at: string | null;
+    url: string | null;
+    reviews: {
+      window: string;
+      metrics: Record<string, { value: number; ratio_to_baseline: number | null }>;
+    }[];
+  }[];
+  lessons_learned: { id: string; text: string; status: string }[];
+};
+export type AgentRunRow = {
+  id: string;
+  graph_name: string;
+  status: string;
+  brand_name: string;
+  started_at: string;
 };
 export type Page<T> = { items: T[]; total: number; limit: number; offset: number };
 

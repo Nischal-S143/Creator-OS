@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { toast } from "sonner";
 
+import { FlightSimulator } from "@/components/flight-simulator";
 import { useOrg } from "@/components/org-shell";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState, LoadingRows } from "@/components/states";
@@ -73,6 +75,9 @@ export default function CampaignPage({
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
   if (!data) return null;
 
+  const latestRun = data.runs.find((run) => run.status === "succeeded" && run.graph_name === "campaign_ideas");
+  const lessonsUsed = (latestRun?.detail.lessons_used ?? []) as { lesson: string; source: string }[];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -91,6 +96,38 @@ export default function CampaignPage({
           ) : null
         }
       />
+
+      <Link
+        href={`${path}/report`}
+        className="inline-block text-sm font-medium underline underline-offset-4"
+      >
+        View the full campaign report
+      </Link>
+
+      <FlightSimulator
+        path={path}
+        simulation={data.simulation}
+        editable={editable}
+        onChanged={reload}
+      />
+
+      {lessonsUsed.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">These ideas used what you approved earlier</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-inside list-disc text-sm">
+              {lessonsUsed.map((lesson) => (
+                <li key={lesson.lesson}>
+                  {lesson.lesson}{" "}
+                  <span className="text-xs text-muted-foreground">(learned from {lesson.source})</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {generating ? (
         <div className="grid gap-4 md:grid-cols-3" role="status" aria-label="Generating ideas">

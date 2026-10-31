@@ -174,7 +174,7 @@ export function BrandBrain({ base, role }: { base: string; role: Role }) {
     setExtracting(document.id);
     try {
       await api(`${base}/documents/${document.id}/extract-profile`, { method: "POST" });
-      toast.success("Profile drafted. Review it below.");
+      toast.success("Document analyzed. Review the profile below.");
       profiles.reload();
     } catch (caught) {
       toast.error(message(caught, "Could not draft a profile."));
@@ -188,7 +188,7 @@ export function BrandBrain({ base, role }: { base: string; role: Role }) {
       <CardHeader>
         <CardTitle>Brand Brain</CardTitle>
         <CardDescription>
-          Upload brand guidelines, review what AI extracts, and approve it. Campaigns use only approved
+          Upload brand guidelines. The Understanding Agent analyzes them, and you approve the result. Campaigns use only approved
           profiles.
         </CardDescription>
       </CardHeader>
@@ -237,7 +237,7 @@ export function BrandBrain({ base, role }: { base: string; role: Role }) {
                     disabled={extracting !== null}
                     onClick={() => extract(document)}
                   >
-                    {extracting === document.id ? "Drafting…" : "Draft profile with AI"}
+                    {extracting === document.id ? "Analyzing…" : "Analyze with Understanding Agent"}
                   </Button>
                 ) : null}
               </li>
@@ -251,7 +251,7 @@ export function BrandBrain({ base, role }: { base: string; role: Role }) {
             <ErrorState message={profiles.error.message} onRetry={profiles.reload} />
           ) : null}
           {profiles.data?.items.length === 0 ? (
-            <EmptyState title="No profiles yet">Draft one from an uploaded document.</EmptyState>
+            <EmptyState title="No profiles yet">Analyze an uploaded document to create one.</EmptyState>
           ) : null}
           {profiles.data?.items.map((profile) => (
             <ProfileCard

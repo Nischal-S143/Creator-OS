@@ -4,9 +4,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
+import { AudienceIntelligence } from "@/components/audience-intelligence";
 import { BrandBrain } from "@/components/brand-brain";
 import { CampaignList } from "@/components/campaign-list";
 import { MarketGaps } from "@/components/market-gaps";
+import { LearningLedger } from "@/components/learning-ledger";
 import { useOrg } from "@/components/org-shell";
 import { PageHeader } from "@/components/page-header";
 import { ErrorState, LoadingRows } from "@/components/states";
@@ -20,6 +22,8 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { key: "brain", label: "Brand Brain" },
   { key: "campaigns", label: "Campaigns" },
+  { key: "audience", label: "Audience" },
+  { key: "lessons", label: "Lessons" },
   { key: "details", label: "Details" },
 ] as const;
 
@@ -158,6 +162,8 @@ function BrandDetail({ brandId }: { brandId: string }) {
           {can.editCampaign(role) ? <MarketGaps base={path} /> : null}
         </div>
       ) : null}
+      {tab === "audience" ? <AudienceIntelligence base={path} role={role} /> : null}
+      {tab === "lessons" ? <LearningLedger base={path} role={role} /> : null}
       {tab === "details" ? (
         <BrandForm brand={data} path={path} editable={can.editBrand(role)} onSaved={reload} />
       ) : null}
