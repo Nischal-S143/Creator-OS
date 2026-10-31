@@ -5,18 +5,22 @@ data (public schema) is never touched.
 """
 
 import os
+import time
 import uuid
 from pathlib import Path
 
+import jwt
 import pytest
 from alembic.config import Config
+from cryptography.hazmat.primitives.asymmetric import ec
 from dotenv import dotenv_values
 from sqlalchemy import create_engine, make_url, text
 from sqlalchemy.orm import Session
 
 from alembic import command
-from app.config import get_settings
-from app.db import get_engine, get_sessionmaker
+from app.core.config import get_settings
+from app.db.session import get_engine, get_sessionmaker
+from app.security.tokens import TokenVerifier, get_token_verifier
 
 ENV = Path(__file__).resolve().parents[3] / ".env"
 
@@ -25,6 +29,7 @@ def _reset_caches() -> None:
     get_settings.cache_clear()
     get_engine.cache_clear()
     get_sessionmaker.cache_clear()
+    get_token_verifier.cache_clear()
 
 
 @pytest.fixture(scope="session")
@@ -71,12 +76,40 @@ def db(migrated) -> Session:
     session.close()
 
 
+TEST_ISSUER = "https://test.invalid/auth/v1"
+TEST_KEY = ec.generate_private_key(ec.SECP256R1())
+
+
+@pytest.fixture
+def make_user():
+    """Returns auth headers for a new identity, signed by a key the test verifier trusts."""
+
+    def factory(email: str | None = None) -> dict[str, str]:
+        subject = uuid.uuid4().hex
+        token = jwt.encode(
+            {
+                "sub": subject,
+                "email": email or f"{subject}@example.com",
+                "iss": TEST_ISSUER,
+                "aud": "authenticated",
+                "exp": int(time.time()) + 600,
+            },
+            TEST_KEY,
+            algorithm="ES256",
+        )
+        return {"Authorization": f"Bearer {token}"}
+
+    return factory
+
+
 @pytest.fixture
 def client(migrated):
     from fastapi.testclient import TestClient
 
     from app.main import app
 
+    verifier = TokenVerifier(TEST_ISSUER, "authenticated", lambda _token: TEST_KEY.public_key())
+    app.dependency_overrides[get_token_verifier] = lambda: verifier
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

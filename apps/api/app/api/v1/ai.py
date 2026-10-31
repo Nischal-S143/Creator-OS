@@ -5,8 +5,8 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from app.config import get_settings
-from app.services.gemini import (
+from app.core.config import get_settings
+from app.integrations.gemini.service import (
     GeminiInvalidResponseError,
     GeminiRequestError,
     GeminiService,

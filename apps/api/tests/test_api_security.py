@@ -4,14 +4,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.v1.ai import ContentIdea, ContentIdeas
-from app.config import get_settings
-from app.main import create_app
-from app.services.gemini import (
+from app.core.config import get_settings
+from app.integrations.gemini.service import (
     GeminiInvalidResponseError,
     GeminiRequestError,
     GeminiUnavailableError,
     get_gemini,
 )
+from app.main import create_app
 
 KEY = "unit-test-internal-key"
 UPSTREAM_DETAIL = "project 123456789012 is not enabled"

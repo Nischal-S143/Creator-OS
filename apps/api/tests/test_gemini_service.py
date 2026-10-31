@@ -8,8 +8,8 @@ import pytest
 from google.genai import errors
 from pydantic import BaseModel
 
-from app.config import Settings
-from app.services.gemini import (
+from app.core.config import Settings
+from app.integrations.gemini.service import (
     GeminiInvalidResponseError,
     GeminiRequestError,
     GeminiService,
@@ -71,7 +71,7 @@ def no_backoff_delay(monkeypatch):
     async def instant(_delay):
         await real_sleep(0)
 
-    monkeypatch.setattr("app.services.gemini.asyncio.sleep", instant)
+    monkeypatch.setattr("app.integrations.gemini.service.asyncio.sleep", instant)
 
 
 def test_generate_text_returns_text():

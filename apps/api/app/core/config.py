@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=Path(__file__).resolve().parents[3] / ".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=Path(__file__).resolve().parents[4] / ".env", extra="ignore")
 
     app_env: Literal["development", "staging", "production"] = "development"
     # Temporary guard for internal endpoints until user login exists.
@@ -21,6 +21,19 @@ class Settings(BaseSettings):
     db_pool_timeout: int = 30
     db_pool_recycle: int = 1800
     db_connect_timeout: int = 10
+
+    # Login accounts (JSON file) and the token signing key. Must stay out of Git.
+    auth_data_dir: Path = Path(__file__).resolve().parents[4] / "data" / "auth"
+
+    upload_dir: Path = Path(__file__).resolve().parents[4] / "data" / "uploads"
+
+    meko_api_key: SecretStr | None = None
+    meko_mcp_url: str = "https://mcp.mekodata.ai/mcp"
+    # Development only. Never set this where real client data is stored.
+    meko_shared_datapack_id: str | None = None
+
+    # Counts every AI workflow run per agency, as a cost guard until usage billing exists.
+    ai_daily_run_limit: int = 200
 
     redis_url: str = "redis://localhost:6379/0"
 

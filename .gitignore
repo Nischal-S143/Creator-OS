@@ -1,4 +1,5 @@
-# Secrets
+# Secrets and login data
+data/
 .env
 .env.*
 !.env.example

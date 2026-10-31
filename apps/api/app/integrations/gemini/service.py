@@ -9,7 +9,7 @@ from google import genai
 from google.genai import errors, types
 from pydantic import BaseModel, ValidationError
 
-from app.config import Settings, get_settings
+from app.core.config import Settings, get_settings
 
 log = logging.getLogger(__name__)
 
