@@ -65,3 +65,52 @@ class FeedbackHypothesis(BaseModel):
 class FeedbackReportDraft(BaseModel):
     summary: str = Field(min_length=5, max_length=1000)
     hypotheses: list[FeedbackHypothesis] = Field(max_length=5)
+
+
+class Rating(BaseModel):
+    score: int = Field(ge=1, le=5)
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class Ratings(BaseModel):
+    brand_fit: Rating
+    audience_relevance: Rating
+    feasibility: Rating
+    differentiation: Rating
+    risk_safety: Rating
+    evidence_quality: Rating
+
+
+class StrategyDraft(BaseModel):
+    name: str = Field(min_length=2, max_length=150)
+    summary: str = Field(min_length=5, max_length=800)
+    target_audience: str = Field(min_length=2, max_length=500)
+    content_pillars: list[str] = Field(min_length=1, max_length=6)
+    hook_strategy: str = Field(min_length=3, max_length=500)
+    production_effort: Literal["low", "medium", "high"]
+    ratings: Ratings
+    assumptions: list[str] = Field(min_length=1, max_length=8)
+    evidence: list[str] = Field(max_length=8)
+    risks: list[str] = Field(min_length=1, max_length=8)
+
+
+class SimulationDraft(BaseModel):
+    strategies: list[StrategyDraft] = Field(min_length=3, max_length=3)
+    limitations: list[str] = Field(min_length=1, max_length=6)
+
+
+class AudienceCluster(BaseModel):
+    topic: str = Field(min_length=2, max_length=150)
+    intent: Literal["learn", "buy", "compare", "complain", "praise", "other"]
+    sentiment: Literal["positive", "neutral", "negative", "mixed"]
+    # No length cap: Gemini rejects this schema with one, and score_clusters validates every number.
+    comment_numbers: list[int] = Field(min_length=1)
+    representative_questions: list[str] = Field(max_length=5)
+    brand_relevance: int = Field(ge=1, le=5)
+    content_gap: bool
+    suggested_angle: str = Field(min_length=5, max_length=500)
+
+
+class AudienceReportDraft(BaseModel):
+    clusters: list[AudienceCluster] = Field(min_length=1, max_length=12)
+    limitations: list[str] = Field(min_length=1, max_length=6)
