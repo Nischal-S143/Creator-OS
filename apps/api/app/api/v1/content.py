@@ -24,6 +24,7 @@ from app.integrations.gemini.bridge import get_gateway
 from app.integrations.gemini.service import GeminiError
 from app.integrations.meko.client import MekoClient, get_meko
 from app.models import (
+    AgentRun,
     Approval,
     Brand,
     Campaign,
@@ -36,7 +37,7 @@ from app.schemas.agents import MarketGapReport
 from app.schemas.core import Request, Response
 from app.security.context import TenantContext, require
 from app.security.permissions import Permission
-from app.services.brand_context import NoApprovedProfile, load_brand_context
+from app.services.brand_context import AgentLog, NoApprovedProfile, load_brand_context
 
 log = logging.getLogger(__name__)
 
@@ -143,6 +144,18 @@ class GuardianRow(BaseModel):
 
 class GuardianRows(BaseModel):
     items: list[GuardianRow]
+
+
+class AgentRunRow(BaseModel):
+    id: uuid.UUID
+    graph_name: str
+    status: str
+    brand_name: str
+    started_at: datetime
+
+
+class AgentRunRows(BaseModel):
+    items: list[AgentRunRow]
 
 
 class PendingApproval(BaseModel):
@@ -326,6 +339,32 @@ def list_all_content(
     )
 
 
+@router.get("/agent-runs", response_model=AgentRunRows)
+def list_agent_runs(
+    tenant: TenantContext = Depends(require(Permission.CAMPAIGN_VIEW)),
+    db: Session = Depends(get_db),
+) -> AgentRunRows:
+    rows = db.execute(
+        select(AgentRun, Brand.name)
+        .join(Brand, (Brand.id == AgentRun.brand_id) & (Brand.organization_id == AgentRun.organization_id))
+        .where(AgentRun.organization_id == tenant.organization_id)
+        .order_by(AgentRun.started_at.desc())
+        .limit(50)
+    ).all()
+    return AgentRunRows(
+        items=[
+            AgentRunRow(
+                id=run.id,
+                graph_name=run.graph_name,
+                status=run.status,
+                brand_name=name,
+                started_at=run.started_at,
+            )
+            for run, name in rows
+        ]
+    )
+
+
 @router.get("/guardian-reviews", response_model=GuardianRows)
 def list_guardian_reviews(
     tenant: TenantContext = Depends(require(Permission.CAMPAIGN_VIEW)),
@@ -383,6 +422,9 @@ def revise_content(
     meko: MekoClient | None = Depends(get_meko),
 ) -> ContentDetail:
     item = _item(db, tenant, content_id)
+    if (item.publication or {}).get("published_at"):
+        raise HTTPException(status_code=409, detail="published content cannot be changed")
+    item.publication = None
     _supersede_pending(db, item)
     item.status = "generating"
     db.commit()
@@ -401,6 +443,9 @@ def edit_content(
 ) -> ContentDetail:
     """A person's edit makes a new version, which goes back through Guardian and needs new approval."""
     item = _item(db, tenant, content_id)
+    if (item.publication or {}).get("published_at"):
+        raise HTTPException(status_code=409, detail="published content cannot be changed")
+    item.publication = None
     previous = latest_version(db, item)
     if previous is None:
         raise HTTPException(status_code=409, detail="this content has no version to edit yet")
@@ -560,4 +605,7 @@ def market_gaps(
         finish_run(db, run, error=type(exc).__name__)
         raise HTTPException(status_code=502, detail="AI could not finish this. Try again.") from exc
     finish_run(db, run, detail={"gaps": len(report.gaps)})
+    AgentLog(meko, context.datapack_id, f"Market gaps: {brand_id}").record(
+        "Market Gap", "suggest topics to test", report.model_dump_json()
+    )
     return report

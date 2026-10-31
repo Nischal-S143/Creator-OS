@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     # Development only. Never set this where real client data is stored.
     meko_shared_datapack_id: str | None = None
 
+    fal_key: SecretStr | None = None
+    fal_image_model: str = "fal-ai/flux-2"
+    fal_video_model: str = "blackforestlabs/flux-3-max/text-to-video"
+    # Daily per-agency caps on paid media generation.
+    media_daily_image_limit: int = 100
+    media_daily_video_limit: int = 10
+
     # Counts every AI workflow run per agency, as a cost guard until usage billing exists.
     ai_daily_run_limit: int = 200
 
