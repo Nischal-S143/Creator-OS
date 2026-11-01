@@ -75,7 +75,7 @@ export function FlightSimulator({
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>Flight Simulator</CardTitle>
+          <CardTitle>Strategy Comparison</CardTitle>
           {editable ? (
             <Button size="sm" variant="outline" disabled={busy} onClick={run}>
               {busy ? "Comparing…" : simulation ? "Compare again" : "Compare strategies"}

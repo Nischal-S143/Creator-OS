@@ -60,7 +60,7 @@ function navigation(organization: Organization): { title: string; items: Item[] 
       items: [
         ...create,
         { label: "Audience Intelligence", path: "/audience", Icon: LightbulbIcon },
-        { label: "Flight Simulator", path: "/simulator", Icon: GaugeIcon },
+        { label: "Strategy Comparison", path: "/simulator", Icon: GaugeIcon },
         { label: "Content Studio", path: "/content-studio", Icon: FileTextIcon },
         { label: "Video Editor", path: "/video", Icon: ClapperboardIcon, planned: true },
       ],

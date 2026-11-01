@@ -71,7 +71,7 @@ export default function CampaignReportPage({
             <Step done={Boolean(data.strategy)} title="Strategy chosen">
               {data.strategy
                 ? `${data.strategy.name} (${data.strategy.total_score} / 100)`
-                : "No strategy selected in the Flight Simulator."}
+                : "No strategy selected in Strategy Comparison."}
             </Step>
             <Step done={data.lessons_used.length > 0} title="Past lessons applied">
               {data.lessons_used.length > 0 ? (
