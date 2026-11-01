@@ -128,3 +128,66 @@
     @apply font-sans;
   }
 }
+
+/* Decorative ambient glow blobs, used behind marketing/auth hero content. */
+.glow-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.dark .glow-blob {
+  opacity: 0.35;
+}
+
+/* Orbiting agent cluster: nodes trace an ellipse around a central hub using
+   translate + scale + opacity, so they always stay upright and legible
+   (no 3D transform math that could distort icon/text content). */
+.orbit-scene {
+  position: relative;
+  perspective: 1200px;
+}
+.orbit-node {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  transform: translate(calc(-50% + 118px), -50%) scale(1);
+  z-index: 3;
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .orbit-node {
+    animation: orbit-ellipse 18s linear infinite;
+    animation-play-state: running;
+  }
+}
+
+@keyframes orbit-ellipse {
+  0% {
+    transform: translate(calc(-50% + 118px), -50%) scale(1);
+    opacity: 1;
+    z-index: 3;
+  }
+  25% {
+    transform: translate(-50%, calc(-50% + 40px)) scale(0.72);
+    opacity: 0.55;
+    z-index: 1;
+  }
+  50% {
+    transform: translate(calc(-50% - 118px), -50%) scale(1);
+    opacity: 1;
+    z-index: 3;
+  }
+  75% {
+    transform: translate(-50%, calc(-50% - 40px)) scale(0.72);
+    opacity: 0.55;
+    z-index: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + 118px), -50%) scale(1);
+    opacity: 1;
+    z-index: 3;
+  }
+}
