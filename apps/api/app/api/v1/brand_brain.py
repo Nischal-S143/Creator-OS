@@ -83,8 +83,11 @@ def log_brand_step(meko: MekoClient | None, brand: Brand, agent: str, task: str,
 
 
 def get_brand_or_404(db: Session, tenant: TenantContext, brand_id: uuid.UUID) -> Brand:
+    """An archived (deleted) client reads as not found, so nothing new can be done against it."""
     brand = db.scalar(
-        select(Brand).where(Brand.id == brand_id, Brand.organization_id == tenant.organization_id)
+        select(Brand).where(
+            Brand.id == brand_id, Brand.organization_id == tenant.organization_id, Brand.status == "active"
+        )
     )
     if brand is None:
         raise HTTPException(status_code=404, detail="brand not found")

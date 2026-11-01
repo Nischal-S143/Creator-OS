@@ -29,6 +29,8 @@ class Brand(TimestampMixin, Base):
     )
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), nullable=False)
+    # "archived" is how a client is deleted: existing campaigns and content stay intact for the record.
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="active")
     industry: Mapped[str | None] = mapped_column(String(100))
     website_url: Mapped[str | None] = mapped_column(String(2048))
     # Set only by the backend. Never accepted from API requests.

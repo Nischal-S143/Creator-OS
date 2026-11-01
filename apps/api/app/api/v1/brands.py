@@ -16,7 +16,9 @@ router = APIRouter(prefix="/api/v1/organizations/{org_id}/brands", tags=["brands
 
 def _get_brand(db: Session, tenant: TenantContext, brand_id: uuid.UUID) -> Brand:
     brand = db.scalar(
-        select(Brand).where(Brand.id == brand_id, Brand.organization_id == tenant.organization_id)
+        select(Brand).where(
+            Brand.id == brand_id, Brand.organization_id == tenant.organization_id, Brand.status == "active"
+        )
     )
     if brand is None:
         raise HTTPException(status_code=404, detail="brand not found")
@@ -54,9 +56,9 @@ def list_brands(
     tenant: TenantContext = Depends(require(Permission.BRAND_VIEW)),
     db: Session = Depends(get_db),
 ) -> Page[BrandOut]:
-    scope = Brand.organization_id == tenant.organization_id
-    total = db.scalar(select(func.count()).select_from(Brand).where(scope))
-    items = db.scalars(select(Brand).where(scope).order_by(Brand.created_at).limit(limit).offset(offset))
+    scope = (Brand.organization_id == tenant.organization_id, Brand.status == "active")
+    total = db.scalar(select(func.count()).select_from(Brand).where(*scope))
+    items = db.scalars(select(Brand).where(*scope).order_by(Brand.created_at).limit(limit).offset(offset))
     return Page(
         items=[BrandOut.model_validate(b) for b in items],
         total=total,
@@ -93,3 +95,17 @@ def update_brand(
         db.rollback()
         raise HTTPException(status_code=422, detail="owner must be a member of this organization") from exc
     return brand
+
+
+@router.delete("/{brand_id}", status_code=204)
+def delete_brand(
+    brand_id: uuid.UUID,
+    tenant: TenantContext = Depends(require(Permission.BRAND_CREATE)),
+    db: Session = Depends(get_db),
+) -> None:
+    """Archives the client rather than deleting its rows, so past campaigns and content stay on record."""
+    brand = _get_brand(db, tenant, brand_id)
+    brand.status = "archived"
+    # Frees the slug (still unique per organization) so a new client can reuse this name.
+    brand.slug = f"{brand.slug[:80]}-deleted-{uuid.uuid4().hex[:8]}"
+    db.commit()
