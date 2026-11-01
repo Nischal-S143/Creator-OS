@@ -58,6 +58,23 @@ Browser tests expect both servers running, with Chrome installed:
 npm run test:e2e
 ```
 
+## Deployment
+
+Vercel deploys this repository as one project with two services, configured in [vercel.json](vercel.json).
+
+| Service | Root | Public path | Reached by |
+| --- | --- | --- | --- |
+| `web` | `apps/web` | `/(.*)`, the whole site | The browser |
+| `api` | `apps/api` | None; internal only | `web`, through a service binding |
+
+The `web` service declares a binding on `api`, so Vercel injects the API's internal URL into `API_URL` at request time. Do not set `API_URL` as a project environment variable; the binding supplies it. `backendUrl` in `apps/web/lib/server/session.ts` reads it per request, which is why only route handlers call the API: bindings do not resolve during the build or in `proxy.ts`.
+
+FastAPI stays internal on purpose, because the browser never calls it. `apps/web/app/api/backend/[...path]/route.ts` is its only caller, and it attaches the session token and allows only the `me` and `organizations` route areas, which keeps `POST /api/v1/ai/test` out of reach from a browser (finding C3 in [docs/security.md](docs/security.md)).
+
+Run both services together locally with `vercel dev`, which injects the binding variables.
+
+Neither service covers the Celery worker and Redis, which need a long-running host, or the `data/auth` account files, which a Vercel deployment cannot keep. See [docs/status.md](docs/status.md).
+
 ## Documentation
 
 - [Architecture](docs/architecture.md)

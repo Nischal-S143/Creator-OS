@@ -69,6 +69,8 @@ Tenant routes nest under `/api/v1/organizations/{org_id}`, so every request name
 
 Development, staging and production each get a separate database, Meko datapacks, credentials, storage bucket and OAuth callbacks. Only development exists today.
 
+Hosting is one Vercel project with two services, declared in `vercel.json`. `web` (`apps/web`) takes all public traffic. `api` (`apps/api`) is internal: no rewrite targets it, and it is reachable only through a service binding that gives `web` the API's internal URL in `API_URL`. The policy layer therefore stays off the public internet, and Next.js route handlers remain its only caller. The Celery worker and Redis have no Vercel service and still need a long-running host.
+
 ## Known constraints
 
 - The current cluster is a sandbox: 1 node, no fault tolerance, 2 vCPU, 4 GB memory, 10 GB disk. It suits development only.

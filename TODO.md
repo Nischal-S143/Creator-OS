@@ -55,7 +55,7 @@ Signup, organization, brand, guidelines upload, Gemini profile, human approval, 
 - [ ] 9: Publishing
 - [ ] 10: Creative Autopsy
 - [ ] 11: Cross-Brand Intelligence
-- [ ] 12: Production readiness
+- [ ] 12: Production readiness. `vercel.json` declares the `web` and `api` services; deployment is untested, and file-based login, dependency pinning and the Celery worker still need decisions
 
 ## Decisions needed
 

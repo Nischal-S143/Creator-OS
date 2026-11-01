@@ -2,9 +2,15 @@ import "server-only";
 
 export const SESSION_COOKIE = "creatoros_session";
 
+/**
+ * Base URL of the API service. On Vercel the `api` service binding injects it into
+ * `API_URL` at request time, so it is read per call and never at build time or in
+ * `proxy.ts`, where bindings do not resolve. The default is local development.
+ */
 export function backendUrl(path: string): string {
   const base = process.env.API_URL ?? "http://127.0.0.1:8000";
-  return `${base}${path}`;
+  // Joining instead of concatenating keeps a base that ends in "/" from doubling the slash.
+  return new URL(path, base).toString();
 }
 
 export function sessionCookieOptions(maxAge: number) {

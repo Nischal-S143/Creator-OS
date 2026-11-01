@@ -1,6 +1,6 @@
 # Implementation status
 
-Last updated 31 October 2026. The first milestone works end to end on real services, and the content agent workflow is built. Most later phases are not started.
+Last updated 1 November 2026. The first milestone works end to end on real services, and the content agent workflow is built. Most later phases are not started.
 
 | Component | State | Evidence |
 | --- | --- | --- |
@@ -26,6 +26,7 @@ Last updated 31 October 2026. The first milestone works end to end on real servi
 - Research and Market Gap have no web or market data, so their output is labelled as unverified.
 - `MEKO_SHARED_DATAPACK_ID` puts all brands in one datapack, separated only by a tag. It is refused outside development.
 - Checkpoints for finished workflows are not pruned yet.
+- `vercel.json` configures deployment as two services, `web` (public) and `api` (internal, reached through a service binding). Nothing has been deployed or tested on Vercel. Two things block a working deployment: login accounts live in a `data/auth` file, which a serverless filesystem does not keep between instances, and the Celery worker and Redis have no Vercel service. `apps/api/requirements.lock` is also not a name Vercel installs from, so the API would resolve the open ranges in `pyproject.toml` (finding C7).
 - Pending: root certificate (`verify-full`), email verification, password reset, per-brand assignment.
 - The GitHub repo is public by decision, so everything pushed must be safe to publish.
 - Local development runs without Docker. Production packaging is decided in Phase 12.
