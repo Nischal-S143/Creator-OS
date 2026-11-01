@@ -1,0 +1,43 @@
+# CreatorOS API: FastAPI on uvicorn.
+# Build context is the repository root, so the image keeps the repo layout and
+# app.core.config resolves its paths the same way it does locally.
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+# curl serves the container health check. psycopg[binary] bundles libpq.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# requirements.lock pins pymupdf to a Windows wheel on a path from the author's
+# machine, which cannot resolve here. Rewrite that one line to the published
+# version so pip picks the manylinux wheel; every other pin is used as written.
+COPY apps/api/requirements.lock /tmp/requirements.lock
+RUN sed -E 's|^pymupdf @ .*|pymupdf==2.0|' /tmp/requirements.lock > /tmp/requirements.linux.txt \
+ && pip install -r /tmp/requirements.linux.txt
+
+COPY apps/api /app/apps/api
+RUN pip install --no-deps -e /app/apps/api
+
+# config.py reads parents[4] for the data directories, which is /app in this
+# layout. Both are set explicitly in the environment as well.
+RUN useradd --create-home --uid 1001 creatoros \
+ && mkdir -p /app/data/auth /app/data/uploads \
+ && chown -R creatoros:creatoros /app
+USER creatoros
+
+WORKDIR /app/apps/api
+EXPOSE 8000
+
+# /health/db is the only health route and it round-trips to YugabyteDB, so this
+# runs on a slow interval rather than the usual 30s.
+HEALTHCHECK --interval=60s --timeout=10s --start-period=45s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:8000/health/db || exit 1
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

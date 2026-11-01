@@ -1,0 +1,40 @@
+# CreatorOS web: Next.js 16 standalone server.
+# Build context is the repository root.
+FROM node:22-alpine AS deps
+WORKDIR /app
+# Turbopack ships native binaries; libc6-compat covers the glibc-linked ones.
+RUN apk add --no-cache libc6-compat
+COPY apps/web/package.json apps/web/package-lock.json ./
+RUN npm ci
+
+FROM node:22-alpine AS builder
+WORKDIR /app
+RUN apk add --no-cache libc6-compat
+# DOCKER_BUILD switches next.config.ts to output: "standalone".
+# next.config.ts already caps build workers at 2 cpus; this caps their heap.
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    DOCKER_BUILD=1 \
+    NODE_ENV=production \
+    NODE_OPTIONS=--max-old-space-size=1536
+COPY --from=deps /app/node_modules ./node_modules
+COPY apps/web ./
+RUN npm run build
+
+FROM node:22-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+RUN addgroup -g 1001 -S nodejs && adduser -S -u 1001 -G nodejs nextjs
+# server.js serves .next/static only once it is copied in beside it. This app
+# keeps its icons in app/ and has no public/ directory, so none is copied.
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+USER nextjs
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:3000/ || exit 1
+
+CMD ["node", "server.js"]
