@@ -22,6 +22,7 @@ import {
   type CalendarItem,
   type ContentDetail,
   type ContentVersion,
+  type MediaItem,
 } from "@/lib/api";
 
 const textareaClass =
@@ -99,6 +100,24 @@ function EditForm({
   );
 }
 
+function MediaButton({
+  label,
+  busy,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  busy: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button size="sm" variant="outline" disabled={disabled || busy} onClick={onClick}>
+      {busy ? "Generating…" : label}
+    </Button>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -119,7 +138,39 @@ export default function ContentDetailPage({ params }: { params: Promise<{ conten
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [generatingScene, setGeneratingScene] = useState<number | null>(null);
+  const [generatingVideo, setGeneratingVideo] = useState(false);
   const calendar = useResource<{ items: CalendarItem[] }>(`${base}/calendar`);
+
+  function mediaSrc(item: MediaItem): string {
+    return `/api/backend${item.url}`;
+  }
+
+  async function generateImage(sceneIndex: number) {
+    setGeneratingScene(sceneIndex);
+    try {
+      await api(`${path}/media/image`, { method: "POST", body: { scene_index: sceneIndex } });
+      toast.success(`Scene ${sceneIndex + 1} image ready`);
+      reload();
+    } catch (caught) {
+      toast.error(failure(caught, "Could not generate this image."));
+    } finally {
+      setGeneratingScene(null);
+    }
+  }
+
+  async function generateVideo() {
+    setGeneratingVideo(true);
+    try {
+      await api(`${path}/media/video`, { method: "POST" });
+      toast.success("Video ready");
+      reload();
+    } catch (caught) {
+      toast.error(failure(caught, "Could not generate a video."));
+    } finally {
+      setGeneratingVideo(false);
+    }
+  }
 
   async function run(action: () => Promise<unknown>, success: string, fallback: string) {
     setBusy(true);
@@ -232,23 +283,66 @@ export default function ContentDetailPage({ params }: { params: Promise<{ conten
           {version && version.scene_plan.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>Scene plan</CardTitle>
-                <CardDescription>
-                  A plan for production. Generating images and video needs a provider, which is not
-                  connected yet.
-                </CardDescription>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <CardTitle>Scene plan</CardTitle>
+                    <CardDescription>
+                      A plan for production. Generate an image per scene, or one full video below.
+                    </CardDescription>
+                  </div>
+                  {canEdit && viewingCurrent ? (
+                    <MediaButton
+                      label={data.media.video ? "Regenerate video" : "Generate video"}
+                      busy={generatingVideo}
+                      disabled={generatingScene !== null}
+                      onClick={generateVideo}
+                    />
+                  ) : null}
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {generatingVideo ? (
+                  <p className="text-xs text-muted-foreground">
+                    Generating a video can take about a minute. You can keep reviewing scenes meanwhile.
+                  </p>
+                ) : null}
+                {data.media.video ? (
+                  <video
+                    controls
+                    className="w-full max-w-sm rounded-lg border"
+                    src={mediaSrc(data.media.video)}
+                  >
+                    Your browser cannot play this video.
+                  </video>
+                ) : null}
                 <ol className="space-y-3 text-sm">
-                  {version.scene_plan.map((scene, index) => (
-                    <li key={index} className="rounded-lg border p-3">
-                      <p className="font-medium">
-                        Scene {index + 1} · {scene.duration_seconds}s · {scene.purpose}
-                      </p>
-                      <p className="text-muted-foreground">{scene.visual_description}</p>
-                      {scene.on_screen_text ? <p className="mt-1">“{scene.on_screen_text}”</p> : null}
-                    </li>
-                  ))}
+                  {version.scene_plan.map((scene, index) => {
+                    const image = data.media.images.find((item) => item.scene_index === index);
+                    return (
+                      <li key={index} className="space-y-2 rounded-lg border p-3">
+                        <p className="font-medium">
+                          Scene {index + 1} · {scene.duration_seconds}s · {scene.purpose}
+                        </p>
+                        <p className="text-muted-foreground">{scene.visual_description}</p>
+                        {scene.on_screen_text ? <p className="mt-1">“{scene.on_screen_text}”</p> : null}
+                        {image ? (
+                          <img
+                            src={mediaSrc(image)}
+                            alt={`Scene ${index + 1}: ${scene.purpose}`}
+                            className="h-32 w-auto rounded-lg border object-cover"
+                          />
+                        ) : null}
+                        {canEdit && viewingCurrent ? (
+                          <MediaButton
+                            label={image ? "Regenerate image" : "Generate image"}
+                            busy={generatingScene === index}
+                            disabled={generatingScene !== null && generatingScene !== index}
+                            onClick={() => generateImage(index)}
+                          />
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ol>
               </CardContent>
             </Card>

@@ -21,6 +21,18 @@ class LocalStorage:
         path.write_bytes(data)
         return key
 
+    def save_content_media(
+        self, organization_id: uuid.UUID, content_id: uuid.UUID, media_id: uuid.UUID, ext: str, data: bytes
+    ) -> str:
+        key = f"organizations/{organization_id}/content/{content_id}/media/{media_id}{ext}"
+        path = self._root / key
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        return key
+
+    def read(self, key: str) -> bytes:
+        return (self._root / key).read_bytes()
+
 
 @lru_cache
 def get_storage() -> LocalStorage:

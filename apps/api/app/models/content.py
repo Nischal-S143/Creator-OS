@@ -56,6 +56,7 @@ class ContentItem(TimestampMixin, Base):
     current_version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     publication: Mapped[dict | None] = mapped_column(JSONB)
     performance: Mapped[dict | None] = mapped_column(JSONB)
+    media: Mapped[dict | None] = mapped_column(JSONB)
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 

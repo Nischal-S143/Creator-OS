@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response as RawResponse
 from langgraph.types import Command
 from pydantic import BaseModel, Field, StringConstraints
 from sqlalchemy import select, update
@@ -22,7 +23,9 @@ from app.graphs.content_graph import (
 )
 from app.integrations.gemini.bridge import get_gateway
 from app.integrations.gemini.service import GeminiError
+from app.integrations.media.gemini_media import GeminiMediaService, MediaGenerationError, get_media_service
 from app.integrations.meko.client import MekoClient, get_meko
+from app.integrations.storage.local import LocalStorage, get_storage
 from app.models import (
     AgentRun,
     Approval,
@@ -112,11 +115,30 @@ class ContentOut(Response):
     created_at: datetime
 
 
+class MediaOut(BaseModel):
+    id: str
+    scene_index: int | None
+    content_type: str
+    model: str
+    created_at: str
+    url: str
+
+
+class MediaState(BaseModel):
+    images: list[MediaOut]
+    video: MediaOut | None
+
+
 class ContentDetail(ContentOut):
     version: VersionOut | None
     versions: list[int]
     reviews: list[ReviewOut]
     approvals: list[ApprovalOut]
+    media: MediaState
+
+
+class GenerateImage(Request):
+    scene_index: int = Field(ge=0, le=20)
 
 
 class ContentList(BaseModel):
@@ -206,6 +228,30 @@ def _detail(db: Session, item: ContentItem, version_number: int | None = None) -
         versions=numbers,
         reviews=[ReviewOut.model_validate(row) for row in reviews],
         approvals=[ApprovalOut.model_validate(row) for row in approvals],
+        media=_media_state(item),
+    )
+
+
+def _media_state(item: ContentItem) -> MediaState:
+    """Only the current version's media is shown. Older versions keep theirs, in case you switch back."""
+    media = item.media or {}
+    key = str(item.current_version)
+
+    def out(entry: dict, scene_index: int | None) -> MediaOut:
+        return MediaOut(
+            id=entry["id"],
+            scene_index=scene_index,
+            content_type=entry["content_type"],
+            model=entry["model"],
+            created_at=entry["created_at"],
+            url=f"/organizations/{item.organization_id}/content/{item.id}/media/{entry['id']}",
+        )
+
+    images = (media.get("images") or {}).get(key, {})
+    video = (media.get("video") or {}).get(key)
+    return MediaState(
+        images=[out(entry, int(scene)) for scene, entry in sorted(images.items(), key=lambda kv: int(kv[0]))],
+        video=out(video, None) if video else None,
     )
 
 
@@ -609,3 +655,162 @@ def market_gaps(
         "Market Gap", "suggest topics to test", report.model_dump_json()
     )
     return report
+
+
+def _video_aspect_ratio(platform: str) -> str:
+    return (
+        "9:16" if platform.lower() in {"instagram", "tiktok", "reel", "reels", "story", "shorts"} else "16:9"
+    )
+
+
+def _require_unpublished_version(db: Session, item: ContentItem) -> ContentVersion:
+    if (item.publication or {}).get("published_at"):
+        raise HTTPException(status_code=409, detail="published content cannot be changed")
+    version = latest_version(db, item)
+    if version is None:
+        raise HTTPException(status_code=409, detail="this content has no version to generate media for yet")
+    return version
+
+
+@router.post("/content/{content_id}/media/image", response_model=ContentDetail)
+def generate_scene_image(
+    content_id: uuid.UUID,
+    body: GenerateImage,
+    tenant: TenantContext = Depends(require(Permission.CAMPAIGN_EDIT)),
+    db: Session = Depends(get_db),
+    media: GeminiMediaService = Depends(get_media_service),
+    storage: LocalStorage = Depends(get_storage),
+    meko: MekoClient | None = Depends(get_meko),
+) -> ContentDetail:
+    item = _item(db, tenant, content_id)
+    version = _require_unpublished_version(db, item)
+    if body.scene_index >= len(version.scene_plan):
+        raise HTTPException(status_code=404, detail="scene not found")
+    scene = version.scene_plan[body.scene_index]
+    enforce_ai_limit(db, tenant.organization_id)
+    run = start_run(
+        db, tenant, item.brand_id, "image_generation", media.image_model, campaign_id=item.campaign_id
+    )
+    prompt = (
+        f"{scene['visual_description']}. On-screen text, if any: {scene.get('on_screen_text') or 'none'}. "
+        f"Style: clean, photoreal, suited to a {item.platform} post. "
+        "No real people, no logos, no on-image text."
+    )
+    try:
+        result = media.generate_image(prompt)
+    except MediaGenerationError as exc:
+        log.warning("image generation failed: %s", exc)
+        finish_run(db, run, error=type(exc).__name__)
+        raise HTTPException(status_code=502, detail="Could not generate an image. Try again.") from exc
+    media_id = uuid.uuid4()
+    ext = ".jpg" if "jpeg" in result.content_type else ".png"
+    storage.save_content_media(tenant.organization_id, item.id, media_id, ext, result.data)
+    entry = {
+        "id": str(media_id),
+        "content_type": result.content_type,
+        "model": media.image_model,
+        "created_at": datetime.now(UTC).isoformat(),
+    }
+    current = item.media or {}
+    images = dict(current.get("images") or {})
+    for_version = dict(images.get(str(item.current_version)) or {})
+    for_version[str(body.scene_index)] = entry
+    images[str(item.current_version)] = for_version
+    item.media = {**current, "images": images}
+    db.commit()
+    finish_run(db, run, detail={"scene_index": body.scene_index})
+    brand = get_brand_or_404(db, tenant, item.brand_id)
+    datapack_id = (meko.shared_datapack_id or brand.meko_datapack_id) if meko else None
+    AgentLog(meko, datapack_id, f"Content workflow: {item.title} ({item.id})").record(
+        "Image", f"generate the image for scene {body.scene_index}", prompt
+    )
+    return _detail(db, item)
+
+
+@router.post("/content/{content_id}/media/video", response_model=ContentDetail)
+def generate_video(
+    content_id: uuid.UUID,
+    tenant: TenantContext = Depends(require(Permission.CAMPAIGN_EDIT)),
+    db: Session = Depends(get_db),
+    media: GeminiMediaService = Depends(get_media_service),
+    storage: LocalStorage = Depends(get_storage),
+    meko: MekoClient | None = Depends(get_meko),
+) -> ContentDetail:
+    item = _item(db, tenant, content_id)
+    version = _require_unpublished_version(db, item)
+    enforce_ai_limit(db, tenant.organization_id)
+    run = start_run(
+        db, tenant, item.brand_id, "video_generation", media.video_model, campaign_id=item.campaign_id
+    )
+    scenes = "; ".join(
+        f"scene {i + 1}: {scene['visual_description']}" for i, scene in enumerate(version.scene_plan)
+    )
+    prompt = (
+        f"Hook: {version.hook}. {scenes or version.script[:300]}. "
+        f"Style: clean, photoreal, suited to a {item.platform} post. "
+        "No real people, no logos, no text overlays."
+    )
+    try:
+        result = media.generate_video(prompt, aspect_ratio=_video_aspect_ratio(item.platform))
+    except MediaGenerationError as exc:
+        log.warning("video generation failed: %s", exc)
+        finish_run(db, run, error=type(exc).__name__)
+        raise HTTPException(status_code=502, detail="Could not generate a video. Try again.") from exc
+    media_id = uuid.uuid4()
+    storage.save_content_media(tenant.organization_id, item.id, media_id, ".mp4", result.data)
+    entry = {
+        "id": str(media_id),
+        "content_type": result.content_type,
+        "model": media.video_model,
+        "created_at": datetime.now(UTC).isoformat(),
+    }
+    current = item.media or {}
+    videos = dict(current.get("video") or {})
+    videos[str(item.current_version)] = entry
+    item.media = {**current, "video": videos}
+    db.commit()
+    finish_run(db, run, detail={})
+    brand = get_brand_or_404(db, tenant, item.brand_id)
+    datapack_id = (meko.shared_datapack_id or brand.meko_datapack_id) if meko else None
+    AgentLog(meko, datapack_id, f"Content workflow: {item.title} ({item.id})").record(
+        "Video", "generate a video for this content", prompt
+    )
+    return _detail(db, item)
+
+
+@router.get("/content/{content_id}/media/{media_id}")
+def get_media_file(
+    content_id: uuid.UUID,
+    media_id: uuid.UUID,
+    tenant: TenantContext = Depends(require(Permission.CAMPAIGN_VIEW)),
+    db: Session = Depends(get_db),
+    storage: LocalStorage = Depends(get_storage),
+) -> RawResponse:
+    """Serves the bytes directly. media_id must appear in this content's own media record, not guessed."""
+    item = _item(db, tenant, content_id)
+    media = item.media or {}
+    found = next(
+        (
+            entry
+            for group in (media.get("images") or {}).values()
+            for entry in group.values()
+            if entry["id"] == str(media_id)
+        ),
+        None,
+    ) or next(
+        (entry for entry in (media.get("video") or {}).values() if entry["id"] == str(media_id)),
+        None,
+    )
+    if found is None:
+        raise HTTPException(status_code=404, detail="media not found")
+    ext = (
+        ".mp4"
+        if found["content_type"] == "video/mp4"
+        else (".jpg" if "jpeg" in found["content_type"] else ".png")
+    )
+    key = f"organizations/{tenant.organization_id}/content/{item.id}/media/{media_id}{ext}"
+    try:
+        data = storage.read(key)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="media file is missing") from exc
+    return RawResponse(content=data, media_type=found["content_type"])

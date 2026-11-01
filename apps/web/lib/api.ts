@@ -169,6 +169,14 @@ export type ContentVersion = {
   };
   content_hash: string;
 };
+export type MediaItem = {
+  id: string;
+  scene_index: number | null;
+  content_type: string;
+  model: string;
+  created_at: string;
+  url: string;
+};
 export type ContentDetail = ContentRow & {
   version: ContentVersion | null;
   versions: number[];
@@ -184,6 +192,7 @@ export type ContentDetail = ContentRow & {
     decision: string;
     feedback: string | null;
   }[];
+  media: { images: MediaItem[]; video: MediaItem | null };
 };
 export type PendingApproval = {
   approval_id: string;

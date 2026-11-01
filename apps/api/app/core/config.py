@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     fal_key: SecretStr | None = None
     fal_image_model: str = "fal-ai/flux-2"
     fal_video_model: str = "blackforestlabs/flux-3-max/text-to-video"
+
+    # Verified live on 1 November 2026: both return real media on this key's project.
+    gemini_image_model: str = "gemini-3.1-flash-lite-image"
+    gemini_video_model: str = "gemini-omni-1.1-flash"
+    gemini_media_timeout_s: float = 180
+
     # Daily per-agency caps on paid media generation.
     media_daily_image_limit: int = 100
     media_daily_video_limit: int = 10
