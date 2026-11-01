@@ -39,6 +39,14 @@ async function forward(request: Request, context: Context): Promise<NextResponse
       { status: 503 },
     );
   }
+  const contentType = upstream.headers.get("content-type") ?? "";
+  if (!contentType.startsWith("application/json")) {
+    // Generated images and video: stream the bytes through as-is, with no JSON parsing.
+    return new NextResponse(upstream.body, {
+      status: upstream.status,
+      headers: { "content-type": contentType || "application/octet-stream" },
+    });
+  }
   const body = await upstream.json().catch(() => ({}));
   return NextResponse.json(body, { status: upstream.status });
 }
@@ -46,3 +54,4 @@ async function forward(request: Request, context: Context): Promise<NextResponse
 export const GET = forward;
 export const POST = forward;
 export const PATCH = forward;
+export const DELETE = forward;
