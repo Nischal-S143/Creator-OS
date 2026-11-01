@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+import { LandingPage } from "@/components/marketing/landing-page";
+
+export const dynamic = "force-dynamic";
 
 export default function Home() {
-  redirect("/dashboard");
+  return <LandingPage />;
 }

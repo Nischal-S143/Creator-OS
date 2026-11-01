@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const SESSION_COOKIE = "creatoros_session";
-const AUTH_PAGES = new Set(["/sign-in", "/sign-up"]);
+// The marketing home page renders for signed-out visitors, same as the auth pages.
+const REDIRECTS_SIGNED_IN_HOME = new Set(["/", "/sign-in", "/sign-up"]);
 
 export function proxy(request: NextRequest) {
   const signedIn = request.cookies.has(SESSION_COOKIE);
   const { pathname } = request.nextUrl;
-  if (AUTH_PAGES.has(pathname)) {
+  if (REDIRECTS_SIGNED_IN_HOME.has(pathname)) {
     return signedIn
       ? NextResponse.redirect(new URL("/dashboard", request.url))
       : NextResponse.next();
@@ -18,5 +19,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|favicon.ico).*)"],
+  matcher: ["/((?!api|_next|favicon\\.ico|icon\\.svg).*)"],
 };
